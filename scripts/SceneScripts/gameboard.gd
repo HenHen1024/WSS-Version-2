@@ -48,7 +48,7 @@ func _ready() -> void:
 	# ── 2. Generate visual terrain ────────────────────────────────────────────
 	# Fills the TileMapLayer children with noise-based terrain tiles
 	generateWorld.generateWorld(
-		$board/TileMapLayer, noise, GameManager.x, GameManager.y)
+		$board/TileMapLayer, noise, GameManager.x, GameManager.y, GameManager.seed)
 	GameManager.registerBoard($board/TileMapLayer)  # Keeps legacy reference in GameManager
 
 	# ── 3. Start the WSS2 game logic ──────────────────────────────────────────
