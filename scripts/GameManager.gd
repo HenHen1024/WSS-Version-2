@@ -57,7 +57,7 @@ func start_game() -> void:
 
 	# Generate the tile-based game map using the chosen difficulty's terrain weights
 	game_map = GameMap.new()
-	game_map.generate(x, y, difficulty)
+	game_map.generate(x, y, difficulty, seed)
 
 	# Spawn the player at the left (west) edge, vertically centered
 	var start_y = y / 2
