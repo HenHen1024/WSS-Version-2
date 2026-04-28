@@ -43,6 +43,7 @@ var forestAtlas     = [Vector2(10, 9), Vector2(12, 8)]    # Two random forest ti
 # noiseDeco  – Perlin noise; determines decoration placement
 var noise      : Noise
 var noiseDeco  : Noise
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 # ─────────────────────────────────────────────────────────────────────────────
 # createNoiseTexture(seed)
@@ -56,8 +57,10 @@ func createNoiseTexture(seed = null) -> void:
 
 	# Randomise the seed if the caller didn't supply one
 	if seed == null:
-		randomize()
-		seed = randi()
+		_rng.randomize()
+		seed = _rng.randi()
+	else:
+		_rng.seed = int(seed)
 
 	# Height noise: Simplex Smooth produces gentle rolling hills
 	var heightFNL         = FastNoiseLite.new()
@@ -90,7 +93,13 @@ func createNoiseTexture(seed = null) -> void:
 # tileMapPath : The TileMapLayer node whose children are the ground and deco layers
 # ─────────────────────────────────────────────────────────────────────────────
 func generateWorld(tileMapPath: TileMapLayer, noise: Noise, xSize: int = 100, ySize: int = 100, seed = null) -> void:
-	createNoiseTexture()  # Initialise noise (ignores the seed param; uses internal randomize)
+	createNoiseTexture(seed)
+	grassTileCoor.clear()
+	waterTileCoor.clear()
+	sandTileCoor.clear()
+	forestTileCoor.clear()
+	cactusTileCoor.clear()
+	treeTileCoor.clear()
 
 	# Get the two TileMapLayer children: index 0 = ground, index 1 = decoration overlay
 	var groundTileMap = tileMapPath.get_child(0)
@@ -117,7 +126,7 @@ func generateWorld(tileMapPath: TileMapLayer, noise: Noise, xSize: int = 100, yS
 
 			elif noise_val < -0.4:
 				# Low elevation → Forest tile (pick one of two random variants)
-				groundTileMap.set_cell(Vector2(x, y), terrainSet, forestAtlas.pick_random())
+				groundTileMap.set_cell(Vector2(x, y), terrainSet, forestAtlas[_rng.randi_range(0, forestAtlas.size() - 1)])
 				forestTileCoor.append(Vector2i(x, y))
 				# Trees appear throughout the forest where deco noise is above threshold
 				if deco_noise > -0.1:
