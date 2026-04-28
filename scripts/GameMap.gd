@@ -15,6 +15,7 @@ class_name GameMap
 var width: int   # Number of columns
 var height: int  # Number of rows
 var cells: Array = []  # 2-D array indexed as cells[x][y]; each element is a MapCell
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
 # ── Terrain probability weights per difficulty ────────────────────────────────
 # Index order matches Terrain.Type enum: Plains, Mountain, Desert, Swamp, Forest
@@ -35,10 +36,15 @@ const ITEM_CHANCE = 0.15  # 15% chance per cell
 # Fills the cells array with MapCell objects.
 # Called once per game session from GameManager.start_game().
 # ─────────────────────────────────────────────────────────────────────────────
-func generate(w: int, h: int, difficulty: String):
+func generate(w: int, h: int, difficulty: String, seed = null):
 	width  = w
 	height = h
 	cells  = []
+
+	if seed == null:
+		_rng.randomize()
+	else:
+		_rng.seed = int(seed)
 
 	# Look up the terrain weight array; fall back to "normal" for unknown strings
 	var weights = DIFFICULTY_WEIGHTS.get(difficulty, DIFFICULTY_WEIGHTS["normal"])
@@ -81,7 +87,7 @@ func _pick_terrain(weights: Array) -> int:
 	for w in weights:
 		total += w
 
-	var roll       = randi() % total  # Pick a random ticket
+	var roll       = _rng.randi_range(0, total - 1)  # Pick a random ticket
 	var cumulative = 0
 	for i in range(weights.size()):
 		cumulative += weights[i]
@@ -100,19 +106,19 @@ func _pick_terrain(weights: Array) -> int:
 # ─────────────────────────────────────────────────────────────────────────────
 func _maybe_add_item(cell: MapCell):
 	# Roll to see if this cell gets any item at all
-	if randf() > ITEM_CHANCE:
+	if _rng.randf() > ITEM_CHANCE:
 		return  # No item this time
 
-	var roll = randf()  # Second roll decides which item type
+	var roll = _rng.randf()  # Second roll decides which item type
 	if roll < 0.30:
 		# Food: amount between 2-5, 30% chance it regenerates each turn
-		cell.add_item(Item.new(Item.Type.FOOD_BONUS, randi_range(2, 5), randf() < 0.3))
+		cell.add_item(Item.new(Item.Type.FOOD_BONUS, _rng.randi_range(2, 5), _rng.randf() < 0.3))
 	elif roll < 0.55:
 		# Water: amount between 2-5, 40% chance it regenerates each turn
-		cell.add_item(Item.new(Item.Type.WATER_BONUS, randi_range(2, 5), randf() < 0.4))
+		cell.add_item(Item.new(Item.Type.WATER_BONUS, _rng.randi_range(2, 5), _rng.randf() < 0.4))
 	elif roll < 0.75:
 		# Gold: amount between 1-3, one-time pickup (not repeating)
-		cell.add_item(Item.new(Item.Type.GOLD_BONUS, randi_range(1, 3), false))
+		cell.add_item(Item.new(Item.Type.GOLD_BONUS, _rng.randi_range(1, 3), false))
 	else:
 		# Trader NPC: always repeating (player can visit multiple times)
 		cell.add_item(Item.new(Item.Type.TRADER, 0, true))
